@@ -83,7 +83,7 @@ https://another-site.com
 ## Example Output
 
 ```json
-{"site_url":"https://www.example.com/","title":"Example Site","vuln_products":[{"cve_id":"CVE-2024-28000","product_name":"litespeed-cache","product_type":"plugin","version":"2.9.4.1"}],"server":"Apache","start_time":"2025-01-10T07:32:09.61941203+03:00","end_time":"2025-01-10T07:32:11.516537033+03:00"}
+{"site_url":"https://www.example.com/","title":"Example Site","vulnarbilities":[{"cve_id":"CVE-2024-28000","product_name":"litespeed-cache","product_type":"plugin","version":"2.9.4.1"}],"server":"Apache","start_time":"2025-01-10T07:32:09.61941203+03:00","end_time":"2025-01-10T07:32:11.516537033+03:00"}
 ```
 
 ---
