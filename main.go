@@ -232,20 +232,26 @@ func (s *WPVulnScanner) processURL(targetUrl string, results chan<- Result) {
 	}
 
 	if status != 200 {
-		log.Debugf("⛔ Bad status code for %s: %d", targetUrl, status)
+		log.Errorf("⛔ Bad status code for %s: %d", targetUrl, status)
 		return
 	}
 
 	mimeType := getMimeType(headers)
 	if mimeType != "text/html" {
-		log.Debugf("⛔ Invalid mime type for %s: %s", targetUrl, mimeType)
+		log.Errorf("⛔ Invalid mime type for %s: %s", targetUrl, mimeType)
 		return
 	}
 
 	content := string(body)
+
+	if !strings.Contains(content, "/wp-content/") {
+		log.Debugf("⛔ It's not a WordPress site: %s", targetUrl)
+		return
+	}
+
 	title, err := extractTitle(content)
 	if err != nil {
-		log.Debugf("⛔ Error extracting title for %s: %v", targetUrl, err)
+		log.Errorf("⛔ Error extracting title for %s: %v", targetUrl, err)
 		return
 	}
 
@@ -271,14 +277,10 @@ func (s *WPVulnScanner) processURL(targetUrl string, results chan<- Result) {
 				return
 			}
 			content := string(body)
-			if !strings.Contains(content, "/wp-content/") {
-				log.Debugf("⛔ It's not a WordPress site: %s", targetUrl)
-				return
-			}
 			re := regexp.MustCompile(`(?m)^Stable tag: (.*)$`)
 			matches := re.FindStringSubmatch(content)
 			if len(matches) < 2 {
-				log.Warnf("Version not found for %s", readmeUrl)
+				log.Errorf("⛔ Version not found for %s", readmeUrl)
 				return
 			}
 
