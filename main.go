@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -388,12 +389,18 @@ func NewFetcher(config FetchConfig) *Fetcher {
 		}
 	}
 
+	// Настройка TLS для отключения проверки сертификата
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: true, // Отключаем проверку сертификата
+	}
+
 	transport := &http.Transport{
 		DialContext: (&net.Dialer{
 			Resolver:  resolver,
 			Timeout:   config.Timeout,
 			KeepAlive: 30 * time.Second,
 		}).DialContext,
+		TLSClientConfig: tlsConfig, // Применяем настройки TLS
 	}
 
 	client := &http.Client{

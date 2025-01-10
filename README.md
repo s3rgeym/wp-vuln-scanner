@@ -33,7 +33,7 @@ WP Vuln Scanner is a command-line utility designed to scan WordPress sites for v
 
 ### Basic Usage
 ```bash
-./wp-vuln-scanner -i urls.txt -o results.json
+nohup ./wp-vuln-scanner -i urls.txt -log debug -o wp-vulns.json > output.log 2>&1 &
 ```
 
 ### Command-Line Options
