@@ -227,25 +227,25 @@ func (s *WPVulnScanner) processURL(targetUrl string, results chan<- Result) {
 	startTime := time.Now()
 	body, status, headers, err := s.fetcher.Fetch(targetUrl)
 	if err != nil {
-		log.Errorf("Error fetching %s: %v", targetUrl, err)
+		log.Errorf("⛔ Error fetching %s: %v", targetUrl, err)
 		return
 	}
 
 	if status != 200 {
-		log.Debugf("🚫 Bad status code for %s: %d", targetUrl, status)
+		log.Debugf("⛔ Bad status code for %s: %d", targetUrl, status)
 		return
 	}
 
 	mimeType := getMimeType(headers)
 	if mimeType != "text/html" {
-		log.Debugf("Invalid mime type for %s: %s", targetUrl, mimeType)
+		log.Debugf("⛔ Invalid mime type for %s: %s", targetUrl, mimeType)
 		return
 	}
 
 	content := string(body)
 	title, err := extractTitle(content)
 	if err != nil {
-		log.Debugf("Error extracting title for %s: %v", targetUrl, err)
+		log.Debugf("⛔ Error extracting title for %s: %v", targetUrl, err)
 		return
 	}
 
@@ -263,7 +263,7 @@ func (s *WPVulnScanner) processURL(targetUrl string, results chan<- Result) {
 			readmeUrl, _ := urlJoin(targetUrl, "/wp-content/plugins/"+vuln.Plugin+"/readme.txt")
 			body, status, _, err := s.fetcher.Fetch(readmeUrl)
 			if err != nil {
-				log.Debugf("Error fetching %s: %v", readmeUrl, err)
+				log.Debugf("⛔ Error fetching %s: %v", readmeUrl, err)
 				return
 			}
 			if status != 200 {
@@ -271,6 +271,10 @@ func (s *WPVulnScanner) processURL(targetUrl string, results chan<- Result) {
 				return
 			}
 			content := string(body)
+			if !strings.Contains(content, "/wp-content/") {
+				log.Debugf("⛔ It's not a WordPress site: %s", targetUrl)
+				return
+			}
 			re := regexp.MustCompile(`(?m)^Stable tag: (.*)$`)
 			matches := re.FindStringSubmatch(content)
 			if len(matches) < 2 {
@@ -654,7 +658,7 @@ func main() {
 		var err error
 		vulnPlugins, err = loadVulnPluginsFromFile(config.VulnPluginsFile)
 		if err != nil {
-			log.Fatalf("Error loading vulnerable plugins: %v", err)
+			log.Fatalf("☠️ Error loading vulnerable plugins: %v", err)
 		}
 	} else {
 		vulnPlugins = wpPluginVulnerabilities // Используем захардкоженные значения
@@ -672,7 +676,7 @@ func main() {
 
 	urls, err := readURLs(config.InputFile)
 	if err != nil {
-		log.Fatalf("Error reading URLs: %v", err)
+		log.Fatalf("☠️ Error reading URLs: %v", err)
 	}
 
 	results := make(chan Result)
@@ -682,7 +686,7 @@ func main() {
 	go func() {
 		defer resultsWg.Done()
 		if err := writeResults(config.OutputFile, results); err != nil {
-			log.Fatalf("Error writing results: %v", err)
+			log.Fatalf("☠️ Error writing results: %v", err)
 		}
 	}()
 
