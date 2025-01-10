@@ -32,11 +32,13 @@ WP Vuln Scanner is a command-line utility designed to scan WordPress sites for v
 ## Usage
 
 ### Basic Usage
+
 ```bash
 nohup ./wp-vuln-scanner -i urls.txt -log debug -o wp-vulns.json > output.log 2>&1 &
 ```
 
 ### Command-Line Options
+
 | Flag              | Description                                                                 |
 |-------------------|-----------------------------------------------------------------------------|
 | `-i`              | Input file containing URLs to scan (default: stdin).                        |
@@ -53,6 +55,7 @@ nohup ./wp-vuln-scanner -i urls.txt -log debug -o wp-vulns.json > output.log 2>&
 ---
 
 ## Example Input File (`urls.txt`)
+
 ```
 https://example.com
 https://another-site.com
@@ -60,14 +63,17 @@ https://another-site.com
 
 ---
 
-## Example Vulnerability File (`vuln-plugins.yaml`)
+## Example Vulnerability File (`wp-vulns.yaml`)
+
 ```yaml
 - cve_id: "CVE-2024-28000"
-  plugin: "litespeed-cache"
+  product_name: "litespeed-cache"
+  product_type: "plugin"
   max_version: "6.3.0.1"
 
 - cve_id: "CVE-2024-10924"
-  plugin: "really-simple-ssl"
+  product_name: "really-simple-ssl"
+  product_type: "plugin"
   min_version: "9.0.0"
   max_version: "9.1.1.1"
 ```
@@ -75,16 +81,19 @@ https://another-site.com
 ---
 
 ## Example Output
+
 ```json
-{"site_url":"https://www.example.com/","title":"Example Site","vuln_plugins":[{"cve_id":"CVE-2024-28000","plugin":"litespeed-cache","version":"2.9.4.1"}],"server":"Apache","start_time":"2025-01-10T07:32:09.61941203+03:00","end_time":"2025-01-10T07:32:11.516537033+03:00"}
+{"site_url":"https://www.example.com/","title":"Example Site","vuln_products":[{"cve_id":"CVE-2024-28000","product_name":"litespeed-cache","product_type":"plugin","version":"2.9.4.1"}],"server":"Apache","start_time":"2025-01-10T07:32:09.61941203+03:00","end_time":"2025-01-10T07:32:11.516537033+03:00"}
 ```
 
 ---
 
 ## Contributing
+
 Contributions are welcome! Please open an issue or submit a pull request for any improvements or bug fixes.
 
 ---
 
 ## License
+
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.

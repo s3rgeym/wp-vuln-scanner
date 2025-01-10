@@ -29,23 +29,23 @@ import (
 var log = logrus.New()
 
 type Result struct {
-	SiteURL      string              `json:"site_url"`
-	Title        string              `json:"title,omitempty"`
-	VulnPlugins  []map[string]string `json:"vuln_plugins,omitempty"`
-	ServerHeader string              `json:"server,omitempty"`
-	XPoweredBy   string              `json:"powered_by,omitempty"`
-	StartTime    time.Time           `json:"start_time"`
-	EndTime      time.Time           `json:"end_time"`
+	SiteURL        string              `json:"site_url"`
+	Title          string              `json:"title,omitempty"`
+	Vulnarbilities []map[string]string `json:"vulnarbilities,omitempty"`
+	ServerHeader   string              `json:"server,omitempty"`
+	XPoweredBy     string              `json:"powered_by,omitempty"`
+	StartTime      time.Time           `json:"start_time"`
+	EndTime        time.Time           `json:"end_time"`
 }
 
 type WPVulnScanner struct {
-	vulnPlugins        WPPluginVulnerabilities
+	Vulnarbilities     WPVulnerabilities
 	concurrencyLimiter *ConcurrencyLimiter
 	fetcher            *Fetcher
 }
 
 // NewWPVulnScanner создает новый WPVulnScanner с использованием Functional Options
-func NewWPVulnScanner(vulnPlugins WPPluginVulnerabilities, options ...WPVulnScannerOption) *WPVulnScanner {
+func NewWPVulnScanner(Vulnarbilities WPVulnerabilities, options ...WPVulnScannerOption) *WPVulnScanner {
 	// Настройки по умолчанию
 	config := &WPVulnScannerConfig{
 		MaxConcurrent: 10,
@@ -61,7 +61,7 @@ func NewWPVulnScanner(vulnPlugins WPPluginVulnerabilities, options ...WPVulnScan
 	setupLogger(config.LogLevel)
 
 	return &WPVulnScanner{
-		vulnPlugins:        vulnPlugins,
+		Vulnarbilities:     Vulnarbilities,
 		concurrencyLimiter: NewConcurrencyLimiter(config.MaxConcurrent),
 		fetcher:            NewFetcher(config.FetchConfig),
 	}
@@ -69,10 +69,10 @@ func NewWPVulnScanner(vulnPlugins WPPluginVulnerabilities, options ...WPVulnScan
 
 // WPVulnScannerConfig содержит конфигурацию для WPVulnScanner
 type WPVulnScannerConfig struct {
-	MaxConcurrent int
-	LogLevel      string
-	FetchConfig   FetchConfig
-	VulnPlugins   WPPluginVulnerabilities
+	MaxConcurrent  int
+	LogLevel       string
+	FetchConfig    FetchConfig
+	Vulnarbilities WPVulnerabilities
 }
 
 // WPVulnScannerOption определяет тип функции для настройки WPVulnScanner
@@ -99,10 +99,10 @@ func WithFetchConfig(fetchConfig FetchConfig) WPVulnScannerOption {
 	}
 }
 
-// WithVulnPlugins устанавливает уязвимые плагины
-func WithVulnPlugins(vulnPlugins WPPluginVulnerabilities) WPVulnScannerOption {
+// WithVulnarbilities устанавливает уязвимые плагины
+func WithVulnarbilities(Vulnarbilities WPVulnerabilities) WPVulnScannerOption {
 	return func(c *WPVulnScannerConfig) {
-		c.VulnPlugins = vulnPlugins
+		c.Vulnarbilities = Vulnarbilities
 	}
 }
 
@@ -128,81 +128,116 @@ func (s *WPVulnScanner) Scan(urls []string, results chan Result) {
 }
 
 // Vulnerability описывает информацию об уязвимости плагина.
-type WPPluginVulnerability struct {
-	CveId      string `yaml:"cve_id" toml:"cve_id"`                               // Идентификатор CVE
-	Plugin     string `yaml:"plugin" toml:"plugin"`                               // Название каталога плагина
-	MinVersion string `yaml:"min_version,omitempty" toml:"min_version,omitempty"` // Минимальная версия (опционально)
-	MaxVersion string `yaml:"max_version" toml:"max_version"`                     // Максимальная версия
+type WPVulnerability struct {
+	CveId       string `yaml:"cve_id" toml:"cve_id"`                               // Идентификатор CVE
+	ProductName string `yaml:"product_name" toml:"product_name"`                   // Название продукта (плагина или темы)
+	ProductType string `yaml:"product_type" toml:"product_type"`                   // Тип продукта: "plugin" или "theme"
+	MinVersion  string `yaml:"min_version,omitempty" toml:"min_version,omitempty"` // Минимальная версия (опционально)
+	MaxVersion  string `yaml:"max_version" toml:"max_version"`                     // Максимальная версия
 }
 
-// WPPluginVulnerabilities хранит список уязвимостей.
-type WPPluginVulnerabilities []WPPluginVulnerability
+// WPVulnerabilities хранит список уязвимостей.
+type WPVulnerabilities []WPVulnerability
 
-var wpPluginVulnerabilities = WPPluginVulnerabilities{
+var wpVulnerabilities = WPVulnerabilities{
 	// https://xakep.ru/2024/08/22/litespeed-cache-new-admin/
 	{
-		CveId:      "CVE-2024-28000",
-		Plugin:     "litespeed-cache",
-		MaxVersion: "6.3.0.1",
+		CveId:       "CVE-2024-28000",
+		ProductName: "litespeed-cache",
+		ProductType: "plugin",
+		MaxVersion:  "6.3.0.1",
 	},
 	// https://www.kaspersky.com/blog/cve-2024-10924-wordpress-authentication-bypass/52637/
 	{
-		CveId:      "CVE-2024-10924",
-		Plugin:     "really-simple-ssl",
-		MinVersion: "9.0.0",
-		MaxVersion: "9.1.1.1",
+		CveId:       "CVE-2024-10924",
+		ProductName: "really-simple-ssl",
+		ProductType: "plugin",
+		MinVersion:  "9.0.0",
+		MaxVersion:  "9.1.1.1",
 	},
 	// https://censys.com/cve-2024-27956/
 	{
-		CveId:      "CVE-2024-27956",
-		Plugin:     "wp-automatic",
-		MaxVersion: "3.92.0",
+		CveId:       "CVE-2024-27956",
+		ProductName: "wp-automatic",
+		ProductType: "plugin",
+		MaxVersion:  "3.92.0",
 	},
 	{
-		CveId:      "CVE-2024-10542",
-		Plugin:     "cleantalk-spam-protect",
-		MaxVersion: "6.43.2",
+		CveId:       "CVE-2024-10542",
+		ProductName: "cleantalk-spam-protect",
+		ProductType: "plugin",
+		MaxVersion:  "6.43.2",
 	},
 	// https://github.com/advisories/GHSA-wrj5-h97x-2xcg
 	{
-		CveId:      "CVE-2024-10215",
-		Plugin:     "wpbookit",
-		MaxVersion: "1.6.4",
+		CveId:       "CVE-2024-10215",
+		ProductName: "wpbookit",
+		ProductType: "plugin",
+		MaxVersion:  "1.6.4",
 	},
 	{
-		CveId:      "CVE-2024-11613",
-		Plugin:     "wp-file-upload",
-		MaxVersion: "4.24.15",
+		CveId:       "CVE-2024-11613",
+		ProductName: "wp-file-upload",
+		ProductType: "plugin",
+		MaxVersion:  "4.24.15",
 	},
 	// https://www.wordfence.com/blog/2024/01/type-juggling-leads-to-two-vulnerabilities-in-post-smtp-mailer-wordpress-plugin/
 	{
-		CveId:      "CVE-2023-6875",
-		Plugin:     "post-smtp",
-		MaxVersion: "2.8.7",
+		CveId:       "CVE-2023-6875",
+		ProductName: "post-smtp",
+		ProductType: "plugin",
+		MaxVersion:  "2.8.7",
 	},
 	// https://github.com/gbrsh/CVE-2024-1071
 	{
-		CveId:      "CVE-2024-1071",
-		Plugin:     "ultimate-member",
-		MinVersion: "2.1.3",
-		MaxVersion: "2.8.2",
+		CveId:       "CVE-2024-1071",
+		ProductName: "ultimate-member",
+		ProductType: "plugin",
+		MinVersion:  "2.1.3",
+		MaxVersion:  "2.8.2",
 	},
 	// https://thehackernews.com/2024/08/givewp-wordpress-plugin-vulnerability.html
 	{
-		CveId:      "CVE-2024-5932",
-		Plugin:     "give",
-		MaxVersion: "3.14.1",
+		CveId:       "CVE-2024-5932",
+		ProductName: "give",
+		ProductType: "plugin",
+		MaxVersion:  "3.14.1",
 	},
 	// https://www.techradar.com/pro/security/millions-at-risk-as-popular-wordpress-database-plugin-is-targeted-by-hackers-heres-what-wordpress-site-owners-need-to-know
 	{
-		CveId:      "CVE-2023-6933",
-		Plugin:     "better-search-replace",
-		MaxVersion: "1.4.4",
+		CveId:       "CVE-2023-6933",
+		ProductName: "better-search-replace",
+		ProductType: "plugin",
+		MaxVersion:  "1.4.4",
+	},
+	// https://www.cdnetworks.com/blog/cloud-computing/backup-migration-plugin-vulnerability/
+	// https://github.com/Chocapikk/CVE-2023-6553/blob/main/exploit.py
+	{
+		CveId:       "CVE-2023-6553",
+		ProductName: "backup-backup",
+		ProductType: "plugin",
+		MaxVersion:  "1.3.7",
+	},
+	// Древняя уязвимость
+	// https://nvd.nist.gov/vuln/detail/cve-2020-35489
+	{
+		CveId:       "CVE-2020-35489",
+		ProductName: "contact-form-7",
+		ProductType: "plugin",
+		MaxVersion:  "3.5.1",
+	},
+	// https://github.com/mansoorr123/wp-file-manager-CVE-2020-25213
+	{
+		CveId:       "CVE-2020-25213",
+		ProductName: "wp-file-manager",
+		ProductType: "plugin",
+		MinVersion:  "6.0",
+		MaxVersion:  "6.8",
 	},
 }
 
-func loadVulnPluginsFromFile(filePath string) (WPPluginVulnerabilities, error) {
-	var vulnPlugins WPPluginVulnerabilities
+func loadVulnarbilitiesFromFile(filePath string) (WPVulnerabilities, error) {
+	var Vulnarbilities WPVulnerabilities
 	file, err := os.Open(filePath)
 	if err != nil {
 		return nil, err
@@ -210,18 +245,18 @@ func loadVulnPluginsFromFile(filePath string) (WPPluginVulnerabilities, error) {
 	defer file.Close()
 
 	if strings.HasSuffix(filePath, ".yaml") || strings.HasSuffix(filePath, ".yml") {
-		if err := yaml.NewDecoder(file).Decode(&vulnPlugins); err != nil {
+		if err := yaml.NewDecoder(file).Decode(&Vulnarbilities); err != nil {
 			return nil, err
 		}
 	} else if strings.HasSuffix(filePath, ".toml") {
-		if _, err := toml.DecodeReader(file, &vulnPlugins); err != nil {
+		if _, err := toml.DecodeReader(file, &Vulnarbilities); err != nil {
 			return nil, err
 		}
 	} else {
 		return nil, fmt.Errorf("unsupported file format")
 	}
 
-	return vulnPlugins, nil
+	return Vulnarbilities, nil
 }
 
 func (s *WPVulnScanner) processURL(targetUrl string, results chan<- Result) {
@@ -252,24 +287,20 @@ func (s *WPVulnScanner) processURL(targetUrl string, results chan<- Result) {
 		return
 	}
 
-	title, err := extractTitle(content)
-	if err != nil {
-		log.Errorf("⛔ Error extracting title for %s: %v", targetUrl, err)
-		return
-	}
+	title := extractTitle(content)
 
 	var wg sync.WaitGroup
 	var mu sync.Mutex
-	vuln_plugins := make([]map[string]string, 0)
-	for _, v := range s.vulnPlugins {
+	vulnarbilities := make([]map[string]string, 0)
+	for _, v := range s.Vulnarbilities {
 		s.concurrencyLimiter.Acquire()
 		wg.Add(1)
-		go func(vuln WPPluginVulnerability) {
+		go func(vuln WPVulnerability) {
 			defer func() {
 				s.concurrencyLimiter.Release()
 				wg.Done()
 			}()
-			readmeUrl, _ := urlJoin(targetUrl, "/wp-content/plugins/"+vuln.Plugin+"/readme.txt")
+			readmeUrl, _ := urlJoin(targetUrl, fmt.Sprintf("/wp-content/%ss/%s/readme.txt", vuln.ProductType, vuln.ProductName))
 			body, status, _, err := s.fetcher.Fetch(readmeUrl)
 			if err != nil {
 				log.Debugf("⛔ Error fetching %s: %v", readmeUrl, err)
@@ -298,13 +329,14 @@ func (s *WPVulnScanner) processURL(targetUrl string, results chan<- Result) {
 			log.Debugf("version=%#08x (%s), minVersion=%#08x (%s), maxVersion=%#08x (%s)", version, versionStr, minVersion, vuln.MinVersion, maxVersion, vuln.MaxVersion)
 
 			if version >= minVersion && version <= maxVersion {
-				log.Infof("✅ Vulnerability %s found in plugin %q (version %s) at %s", vuln.CveId, vuln.Plugin, versionStr, readmeUrl)
+				log.Infof("✅ Vulnerability %s found in %s %q (version %s) at %s", vuln.CveId, vuln.ProductType, vuln.ProductName, versionStr, readmeUrl)
 
 				mu.Lock()
-				vuln_plugins = append(vuln_plugins, map[string]string{
-					"plugin":  vuln.Plugin,
-					"version": matches[1],
-					"cve_id":  vuln.CveId,
+				vulnarbilities = append(vulnarbilities, map[string]string{
+					"product_name": vuln.ProductName,
+					"product_type": vuln.ProductType,
+					"version":      matches[1],
+					"cve_id":       vuln.CveId,
 				})
 				mu.Unlock()
 			}
@@ -313,18 +345,18 @@ func (s *WPVulnScanner) processURL(targetUrl string, results chan<- Result) {
 
 	wg.Wait()
 
-	if len(vuln_plugins) == 0 {
+	if len(vulnarbilities) == 0 {
 		return
 	}
 
 	results <- Result{
-		SiteURL:      targetUrl,
-		Title:        title,
-		VulnPlugins:  vuln_plugins,
-		ServerHeader: headers.Get("Server"),
-		XPoweredBy:   headers.Get("X-Powered-By"),
-		StartTime:    startTime,
-		EndTime:      time.Now(),
+		SiteURL:        targetUrl,
+		Title:          title,
+		Vulnarbilities: vulnarbilities,
+		ServerHeader:   headers.Get("Server"),
+		XPoweredBy:     headers.Get("X-Powered-By"),
+		StartTime:      startTime,
+		EndTime:        time.Now(),
 	}
 }
 
@@ -498,14 +530,13 @@ func getMimeType(headers http.Header) string {
 	return mediaType
 }
 
-func extractTitle(content string) (string, error) {
+func extractTitle(content string) string {
 	re := regexp.MustCompile(`(?i)<title>(.*?)</title>`)
 	matches := re.FindStringSubmatch(content)
 	if len(matches) < 2 {
-		return "", fmt.Errorf("missing title tag")
+		return ""
 	}
-	title := strings.TrimSpace(matches[1])
-	return html.UnescapeString(title), nil
+	return strings.TrimSpace(html.UnescapeString(matches[1]))
 }
 
 func urlJoin(baseUrl string, paths ...string) (string, error) {
@@ -612,16 +643,16 @@ func setupLogger(logLevel string) {
 }
 
 type Config struct {
-	InputFile       string
-	OutputFile      string
-	MaxConcurrent   int
-	Timeout         time.Duration
-	RequestTimeout  time.Duration
-	Delay           time.Duration
-	DNSServer       string
-	DNSProto        string
-	LogLevel        string
-	VulnPluginsFile string
+	InputFile          string
+	OutputFile         string
+	MaxConcurrent      int
+	Timeout            time.Duration
+	RequestTimeout     time.Duration
+	Delay              time.Duration
+	DNSServer          string
+	DNSProto           string
+	LogLevel           string
+	VulnarbilitiesFile string
 }
 
 func parseFlags() Config {
@@ -634,20 +665,20 @@ func parseFlags() Config {
 	dnsServer := flag.String("dns-server", "", "DNS Server, e.g. 8.8.8.8:53")
 	dnsProto := flag.String("dns-proto", "udp", "DNS Protocol")
 	logLevel := flag.String("log", "info", "Log level: debug, info, warn, error")
-	vulnPluginsFile := flag.String("f", "", "Path to YAML/TOML file with vulnerable plugins")
+	VulnarbilitiesFile := flag.String("f", "", "Path to YAML/TOML file with vulnerable plugins")
 	flag.Parse()
 
 	return Config{
-		InputFile:       *inputFile,
-		OutputFile:      *outputFile,
-		MaxConcurrent:   *maxConcurrent,
-		Timeout:         *timeout,
-		RequestTimeout:  *requestTimeout,
-		Delay:           *delay,
-		DNSServer:       *dnsServer,
-		DNSProto:        *dnsProto,
-		LogLevel:        *logLevel,
-		VulnPluginsFile: *vulnPluginsFile,
+		InputFile:          *inputFile,
+		OutputFile:         *outputFile,
+		MaxConcurrent:      *maxConcurrent,
+		Timeout:            *timeout,
+		RequestTimeout:     *requestTimeout,
+		Delay:              *delay,
+		DNSServer:          *dnsServer,
+		DNSProto:           *dnsProto,
+		LogLevel:           *logLevel,
+		VulnarbilitiesFile: *VulnarbilitiesFile,
 	}
 }
 
@@ -662,22 +693,22 @@ func main() {
 		DNSProto:       config.DNSProto,
 	}
 
-	var vulnPlugins WPPluginVulnerabilities
-	if config.VulnPluginsFile != "" {
+	var Vulnarbilities WPVulnerabilities
+	if config.VulnarbilitiesFile != "" {
 		var err error
-		vulnPlugins, err = loadVulnPluginsFromFile(config.VulnPluginsFile)
+		Vulnarbilities, err = loadVulnarbilitiesFromFile(config.VulnarbilitiesFile)
 		if err != nil {
-			log.Fatalf("☠️ Error loading vulnerable plugins: %v", err)
+			log.Fatalf("☠️ Error loading vulnerabilities: %v", err)
 		}
 	} else {
-		vulnPlugins = wpPluginVulnerabilities // Используем захардкоженные значения
+		Vulnarbilities = wpVulnerabilities // Используем захардкоженные значения
 	}
 
 	log.Info("🚀 Starting...")
 
 	// Создаем WPVulnScanner с использованием Functional Options
 	scanner := NewWPVulnScanner(
-		vulnPlugins,
+		Vulnarbilities,
 		WithMaxConcurrent(config.MaxConcurrent),
 		WithLogLevel(config.LogLevel),
 		WithFetchConfig(fetchConfig),
