@@ -665,7 +665,7 @@ func parseFlags() Config {
 	dnsServer := flag.String("dns-server", "", "DNS Server, e.g. 8.8.8.8:53")
 	dnsProto := flag.String("dns-proto", "udp", "DNS Protocol")
 	logLevel := flag.String("log", "info", "Log level: debug, info, warn, error")
-	VulnarbilitiesFile := flag.String("f", "", "Path to YAML/TOML file with vulnerable plugins")
+	vulnarbilitiesFile := flag.String("f", "", "Path to YAML/TOML file with vulnerabilities")
 	flag.Parse()
 
 	return Config{
@@ -678,7 +678,7 @@ func parseFlags() Config {
 		DNSServer:          *dnsServer,
 		DNSProto:           *dnsProto,
 		LogLevel:           *logLevel,
-		VulnarbilitiesFile: *VulnarbilitiesFile,
+		VulnarbilitiesFile: *vulnarbilitiesFile,
 	}
 }
 
