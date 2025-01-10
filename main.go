@@ -472,7 +472,9 @@ func versionToNumber(version string) int64 {
 	var result int64
 	for i := 0; i < 4; i++ {
 		var num int
-		num, _ = strconv.Atoi(parts[i])
+		if i < len(parts) {
+			num, _ = strconv.Atoi(parts[i])
+		}
 		result += int64(num) << uint(8*(3-i))
 	}
 	return result
