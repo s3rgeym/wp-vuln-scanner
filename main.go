@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"html"
 	"io"
 	"mime"
 	"net"
@@ -109,8 +110,9 @@ func (s *WPVulnScanner) Scan(urls []string, results chan Result) {
 	for _, u := range urls {
 		u = ensureScheme(u)
 		uj, err := urlJoin(u, "/")
+
 		if err != nil {
-			log.Warnf("Invalid URL %s: %v", u, err)
+			log.Warnf("❗ Invalid URL %s: %v", u, err)
 			continue
 		}
 
@@ -142,14 +144,14 @@ var wpPluginVulnerabilities = WPPluginVulnerabilities{
 		Plugin:     "litespeed-cache",
 		MaxVersion: "6.3.0.1",
 	},
-	// https://www.kaspersky.com/blog/cve_id-2024-10924-wordpress-authentication-bypass/52637/
+	// https://www.kaspersky.com/blog/cve-2024-10924-wordpress-authentication-bypass/52637/
 	{
 		CveId:      "CVE-2024-10924",
 		Plugin:     "really-simple-ssl",
 		MinVersion: "9.0.0",
 		MaxVersion: "9.1.1.1",
 	},
-	// https://censys.com/cve_id-2024-27956/
+	// https://censys.com/cve-2024-27956/
 	{
 		CveId:      "CVE-2024-27956",
 		Plugin:     "wp-automatic",
@@ -259,8 +261,8 @@ func (s *WPVulnScanner) processURL(targetUrl string, results chan<- Result) {
 	var mu sync.Mutex
 	vuln_plugins := make([]map[string]string, 0)
 	for _, v := range s.vulnPlugins {
-		wg.Add(1)
 		s.concurrencyLimiter.Acquire()
+		wg.Add(1)
 		go func(vuln WPPluginVulnerability) {
 			defer func() {
 				s.concurrencyLimiter.Release()
@@ -470,10 +472,10 @@ func versionToNumber(version string) int64 {
 		return -1
 	}
 	var result int64
-	for i := 0; i < 4; i++ {
-		var num int
-		if i < len(parts) {
-			num, _ = strconv.Atoi(parts[i])
+	for i := 0; i < len(parts); i++ {
+		num, err := strconv.Atoi(parts[i])
+		if err != nil {
+			return -1 // Ошибка конвертации версии
 		}
 		result += int64(num) << uint(8*(3-i))
 	}
@@ -496,11 +498,7 @@ func extractTitle(content string) (string, error) {
 		return "", fmt.Errorf("missing title tag")
 	}
 	title := strings.TrimSpace(matches[1])
-	decodedTitle, err := url.QueryUnescape(title)
-	if err != nil {
-		return "", fmt.Errorf("failed to decode title: %v", err)
-	}
-	return decodedTitle, nil
+	return html.UnescapeString(title), nil
 }
 
 func urlJoin(baseUrl string, paths ...string) (string, error) {

@@ -16,7 +16,7 @@ WP Vuln Scanner is a command-line utility designed to scan WordPress sites for v
 
 ## Installation
 
-1. Ensure you have Go installed (version 1.20 or higher).
+1. Ensure you have Go installed (version 1.23 or higher).
 2. Clone the repository:
    ```bash
    git clone https://github.com/s3rgeym/wp-vuln-scanner.git
